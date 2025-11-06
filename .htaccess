@@ -1,0 +1,184 @@
+# ============================================================================
+# CONFIGURATION APACHE - SKILLAFRIK
+# ============================================================================
+
+# Activer le moteur de réécriture
+RewriteEngine On
+
+# ============================================================================
+# SÉCURITÉ
+# ============================================================================
+
+# Désactiver l'affichage des erreurs PHP (à activer en production)
+# php_flag display_errors Off
+# php_flag log_errors On
+# php_value error_log /path/to/php-error.log
+
+# Protéger les fichiers sensibles
+<FilesMatch "^(database\.sql|database_corrections\.sql|AUDIT_PROJET\.md|\.env|\.git|composer\.json|package\.json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès aux fichiers de configuration
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Empêcher la navigation dans les répertoires
+Options -Indexes
+
+# Protéger contre les injections de code
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} GLOBALS(=|[|%[0-9A-Z]{0,2}) [OR]
+    RewriteCond %{QUERY_STRING} _REQUEST(=|[|%[0-9A-Z]{0,2})
+    RewriteRule ^(.*)$ index.php [F,L]
+</IfModule>
+
+# Protéger contre les tentatives d'injection SQL
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (union|select|insert|drop|grant|delete|update|replace|truncate) [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# Bloquer les user agents suspects
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+    RewriteCond %{HTTP_USER_AGENT} ^(-|curl|wget|libwww-perl|python|nikto|scan) [NC]
+    RewriteRule ^(.*)$ - [F,L]
+</IfModule>
+
+# ============================================================================
+# PERFORMANCE
+# ============================================================================
+
+# Activer la compression GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Mise en cache des fichiers statiques
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSS et JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # PDF
+    ExpiresByType application/pdf "access plus 1 month"
+    
+    # HTML
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# ============================================================================
+# HEADERS DE SÉCURITÉ
+# ============================================================================
+
+<IfModule mod_headers.c>
+    # Empêcher le clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Protection XSS
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Empêcher le sniffing MIME
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Politique de référent
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (à ajuster selon vos besoins)
+    # Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    
+    # Supprimer les informations de version du serveur
+    Header unset X-Powered-By
+    Header always unset X-Powered-By
+</IfModule>
+
+# ============================================================================
+# CONFIGURATION PHP
+# ============================================================================
+
+# Limites de téléchargement
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# Sécurité des sessions
+php_value session.cookie_httponly 1
+php_value session.cookie_secure 0
+php_value session.use_only_cookies 1
+
+# Timezone
+php_value date.timezone "Africa/Dakar"
+
+# ============================================================================
+# REDIRECTION HTTPS (à décommenter en production avec SSL)
+# ============================================================================
+
+# <IfModule mod_rewrite.c>
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# ============================================================================
+# PAGES D'ERREUR PERSONNALISÉES
+# ============================================================================
+
+# ErrorDocument 400 /errors/400.php
+# ErrorDocument 401 /errors/401.php
+# ErrorDocument 403 /errors/403.php
+# ErrorDocument 404 /errors/404.php
+# ErrorDocument 500 /errors/500.php
+
+# ============================================================================
+# ENCODAGE
+# ============================================================================
+
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .html .css .js .xml .json .rss .atom
+
+# ============================================================================
+# TYPES MIME
+# ============================================================================
+
+<IfModule mod_mime.c>
+    AddType application/javascript js
+    AddType application/json json
+    AddType text/css css
+    AddType image/svg+xml svg svgz
+    AddType application/font-woff woff
+    AddType application/font-woff2 woff2
+</IfModule>
+
+# ============================================================================
+# PROTECTION DES DOSSIERS SENSIBLES
+# ============================================================================
+
+# Bloquer l'accès au dossier config
+<IfModule mod_rewrite.c>
+    RewriteRule ^config/ - [F,L]
+</IfModule>
+
+# ============================================================================
+# FIN DE LA CONFIGURATION
+# ============================================================================
