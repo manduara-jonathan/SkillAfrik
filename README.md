@@ -81,7 +81,7 @@ Créateur et Propriétaire de SkillAfrik
 
 - Email: manduarajonathan.m@gmail.com
 - Téléphone: +243890868095
-- GitHub: [@votre-username](https://github.com/votre-username)
+- GitHub: manduara-jonathan(https://github.com/manduara-jonathan)
 
 ### 1. Cloner le projet
 
